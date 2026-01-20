@@ -1,0 +1,16 @@
+{
+    "name": "frontend-service",
+    "version": "1.0.0",
+    "description": "Simple frontend microservice",
+    "main": "src/index.js",
+    "scripts": {
+      "start": "node src/index.js"
+    },
+    "dependencies": {
+      "express": "^4.19.2",
+      "axios": "^1.7.7"
+    },
+    "engines": {
+      "node": ">=18"
+    }
+  }
