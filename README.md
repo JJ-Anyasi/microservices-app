@@ -1,141 +1,220 @@
 # Cloud-Native Microservices with GitOps
 
-A complete 3-service microservices application built with Node.js/Express, containerized with Docker, packaged with Helm charts, and deployed declaratively to Kubernetes using GitOps with Argo CD.
+A complete 3-service microservices application built with Node.js and Express, containerized with Docker, packaged with Helm charts, and deployed declaratively to Kubernetes using GitOps with Argo CD.
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Technologies](#technologies)
-- [Project Structure](#project-structure)
-- [Local Setup](#local-setup)
-- [CI/CD Pipeline](#cicd-pipeline)
-- [Screenshots & Demo](#screenshots--demo)
-- [Challenges & Learnings](#challenges--learnings)
-- [Future Improvements](#future-improvements)
+---
 
 ## Overview
 
-This project demonstrates a modern DevOps workflow for cloud-native microservices:
+This project demonstrates a modern DevOps workflow for cloud-native microservices.
 
-- **Frontend**: Simple UI that calls the backend for data
-- **Backend**: Provides a basic API endpoint (`/api/message`)
-- **User Service**: Mock user data with endpoints (`/users`, `/users/:id`)
+### Services
 
-Key features:
-- Containerized with Docker → pushed to Docker Hub
-- Packaged with Helm for templating & deployment
-- Deployed to Kubernetes (local Kind cluster) in namespace `microservices`
-- Managed declaratively via GitOps with Argo CD (auto-sync, self-heal, prune)
-- Inter-service communication via Kubernetes DNS (e.g. `http://backend:80`)
-- CI/CD pipeline with GitHub Actions (auto-build & push images on push to main)
+* **Frontend**
+  A simple UI that calls the backend for data.
+
+* **Backend**
+  Provides a basic API endpoint at `/api/message`.
+
+* **User Service**
+  Exposes mock user data via `/users` and `/users/:id`.
+
+### Key Features
+
+* Docker containerization with images pushed to Docker Hub
+* Helm charts for templated Kubernetes deployments
+* Deployment to a local Kind Kubernetes cluster in the `microservices` namespace
+* Declarative GitOps workflow using Argo CD with auto-sync and self-healing
+* Inter-service communication via Kubernetes DNS, for example `http://backend:80`
+* CI pipeline using GitHub Actions to automatically build and push images on every push to `main`
+
+---
 
 ## Architecture
 
 ```mermaid
 graph TD
-    A[Frontend<br>Node.js + Express<br>UI & calls backend] -->|HTTP GET /api/message| B[Backend<br>Node.js + Express<br>Business logic & API]
-    B -->|HTTP GET /users or /users/:id| C[User Service<br>Node.js + Express<br>Mock user data & CRUD]
+    A[Frontend<br>Node.js + Express] -->|HTTP GET /api/message| B[Backend<br>Node.js + Express]
+    B -->|HTTP GET /users| C[User Service<br>Node.js + Express]
 
-    subgraph "Kubernetes Cluster (Kind - local)"
-        D[Argo CD<br>GitOps Controller] -->|Watches Git repo<br>Auto-syncs manifests| E[Helm Charts<br>backend / frontend / user-service]
-        E -->|Renders & deploys| F[Deployments & Services<br>Namespace: microservices]
+    subgraph Kubernetes Cluster (Kind)
+        D[Argo CD] -->|Syncs Git repo| E[Helm Charts]
+        E --> F[Deployments and Services<br>Namespace: microservices]
         F --> A
         F --> B
         F --> C
     end
 
-    G[GitHub Repositories<br>Source code + GitOps manifests] -->|Push / PR| H[GitHub Actions<br>CI Pipeline<br>Build & push Docker images]
-    H -->|Publishes :latest| I[Docker Hub<br>anyasi/backend-service<br>anyasi/frontend-service<br>anyasi/user-service]
+    G[GitHub Repositories] --> H[GitHub Actions CI]
+    H --> I[Docker Hub Images]
+    D --> F
+```
 
-    D -->|Pulls updated images| F
+---
 
-    style A fill:#e6f3ff,stroke:#0066cc,stroke-width:2px
-    style B fill:#fff0e6,stroke:#cc6600,stroke-width:2px
-    style C fill:#e6ffe6,stroke:#006600,stroke-width:2px
-    style D fill:#fff9e6,stroke:#cc9900,stroke-width:2px
-    style G fill:#f5f5f5,stroke:#666,stroke-width:1px
-    style H fill:#f5f5f5,stroke:#666,stroke-width:1px
-    style I fill:#f5f5f5,stroke:#666,stroke-width:1px
-Technologies
+## Technologies
 
-Languages/Frameworks: Node.js + Express
-Containerization: Docker
-Orchestration: Kubernetes (Kind for local development)
-Packaging: Helm v3
-GitOps & CD: Argo CD
-CI: GitHub Actions
-Registry: Docker Hub (anyasi/*:latest)
+* **Languages and Frameworks:** Node.js, Express
+* **Containerization:** Docker
+* **Orchestration:** Kubernetes (Kind for local development)
+* **Packaging:** Helm v3
+* **GitOps and CD:** Argo CD
+* **CI:** GitHub Actions
+* **Container Registry:** Docker Hub (`anyasi/*:latest`)
 
-Project Structure
-textmicroservices-gitops/              # GitOps repo (Argo CD manifests + Helm charts)
-├── argocd/                        # Argo CD Application YAMLs
+---
+
+## Project Structure
+
+```
+microservices-gitops/
+├── argocd/                 # Argo CD application manifests
 ├── charts/
 │   ├── backend/
 │   ├── frontend/
 │   └── user-service/
 └── README.md
 
-microservices-app/                 # Source code repo
+microservices-app/
 ├── backend/
 ├── frontend/
 ├── user-service/
-└── .github/workflows/             # CI pipeline (build-push.yaml)
-Local Setup
-Prerequisites
+└── .github/workflows/      # CI pipeline (build-push.yaml)
+```
 
-Docker Desktop / Docker
-Kind
-kubectl
-Helm
-Argo CD CLI (optional)
+---
 
-Step-by-step
+## Local Setup
 
-Create clusterBashkind create cluster --name dev-project
-Create namespaceBashkubectl create namespace microservices
-Install Argo CDBashkubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yamlWait for pods:Bashkubectl -n argocd get pods --watch
-Access Argo CD UIBashkubectl port-forward svc/argocd-server -n argocd 8080:443Get password:Bashkubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echoLogin: https://localhost:8080 (admin + password)
-Apply ApplicationsBashkubectl apply -f argocd/
-Monitor deploymentBashkubectl get applications -n argocd -w
+### Prerequisites
+
+* Docker
+* Kind
+* kubectl
+* Helm
+* Argo CD CLI (optional)
+
+### Step 1: Create Kubernetes Cluster
+
+```bash
+kind create cluster --name dev-project
+```
+
+### Step 2: Create Namespace
+
+```bash
+kubectl create namespace microservices
+```
+
+### Step 3: Install Argo CD
+
+```bash
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl -n argocd get pods --watch
+```
+
+### Step 4: Access Argo CD UI
+
+```bash
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d; echo
+```
+
+Login at:
+
+```
+https://localhost:8080
+Username: admin
+Password: <retrieved password>
+```
+
+### Step 5: Deploy Applications
+
+```bash
+kubectl apply -f argocd/
+kubectl get applications -n argocd -w
 kubectl get pods -n microservices -w
-Access frontendBashkubectl port-forward svc/frontend 8080:80 -n microservices→ http://localhost:8080
-Access user-serviceBashkubectl port-forward svc/user-service 8081:80 -n microservices→ http://localhost:8081/health, /users, /users/1
+```
 
-CI/CD Pipeline
-GitHub Actions workflow (.github/workflows/build-push.yaml):
+### Step 6: Access Services
 
-Triggers on push/PR to main
-Builds Docker images for backend, frontend, user-service
-Pushes :latest tags to Docker Hub (anyasi/*)
-Uses GitHub Actions cache for fast builds
+Frontend:
 
-Argo CD watches :latest tags → auto-deploys updates.
-Screenshots & Demo
-(Add your screenshots here)
+```bash
+kubectl port-forward svc/frontend 8080:80 -n microservices
+```
 
-Pods running in microservices namespace
-Services in microservices namespace
-Argo CD UI showing all 3 apps Synced + Healthy
-Frontend page displaying backend message
-Successful GitHub Actions run
+Open: http://localhost:8080
 
-(Optional) 1-minute demo video (Loom / screen recording)
-Challenges & Learnings
+User Service:
 
-Debugging Helm helper mismatches after copying charts
-Correctly configuring Kubernetes DNS for inter-service calls
-Troubleshooting Argo CD sync issues (namespace missing, cache, release name conflicts)
-Using environment variables in Helm to avoid hard-coded URLs
-Importance of --force --prune for forcing updates
+```bash
+kubectl port-forward svc/user-service 8081:80 -n microservices
+```
 
-Future Improvements
+Examples:
 
-Add Ingress for clean URLs (no port-forward)
-Implement end-to-end tests in CI
-Add Prometheus + Grafana monitoring via Argo CD
-Multi-environment support (dev/staging/prod) with ApplicationSets
-Secret management (Sealed Secrets / External Secrets)
+* http://localhost:8081/health
+* http://localhost:8081/users
+* http://localhost:8081/users/1
 
-Thank you for reviewing my DevOps final project!
+---
+
+## CI/CD Pipeline
+
+The GitHub Actions workflow located at:
+
+```
+.github/workflows/build-push.yaml
+```
+
+Performs the following:
+
+* Triggers on push or pull request to `main`
+* Builds Docker images for backend, frontend, and user-service
+* Pushes `latest` tags to Docker Hub
+* Uses build cache to speed up pipelines
+
+Argo CD continuously watches the repository and automatically deploys updated images.
+
+---
+
+## Screenshots and Demo
+
+Add screenshots demonstrating:
+
+* Running pods in the `microservices` namespace
+* Kubernetes services
+* Argo CD dashboard showing synced applications
+* Frontend UI response
+* Successful GitHub Actions pipeline run
+
+Optional: include a short demo video.
+
+---
+
+## Challenges and Learnings
+
+* Resolving Helm template helper mismatches
+* Configuring Kubernetes DNS for service-to-service communication
+* Debugging Argo CD sync issues and namespace conflicts
+* Using Helm values and environment variables instead of hard-coded URLs
+* Leveraging force sync and pruning for consistent deployments
+
+---
+
+## Future Improvements
+
+* Add an Ingress controller for clean external access
+* Implement end-to-end testing in CI
+* Add monitoring with Prometheus and Grafana
+* Support multiple environments using ApplicationSets
+* Introduce secure secret management
+
+---
+
+## Conclusion
+
+This project demonstrates a full GitOps workflow for deploying and managing microservices on Kubernetes, combining containerization, CI/CD automation, and declarative infrastructure practices.
