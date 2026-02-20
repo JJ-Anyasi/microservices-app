@@ -34,23 +34,18 @@ This project demonstrates a modern DevOps workflow for cloud-native microservice
 
 ```mermaid
 graph TD
-    A[Frontend<br>Node.js + Express] -->|HTTP GET /api/message| B[Backend<br>Node.js + Express]
-    B -->|HTTP GET /users| C[User Service<br>Node.js + Express]
+    A[Frontend<br/>Node.js + Express] -->|GET /api/message| B[Backend<br/>Node.js + Express]
+    B -->|GET /users| C[User Service<br/>Node.js + Express]
 
-    subgraph Kubernetes Cluster (Kind)
-        D[Argo CD] -->|Syncs Git repo| E[Helm Charts]
-        E --> F[Deployments and Services<br>Namespace: microservices]
-        F --> A
-        F --> B
-        F --> C
+    subgraph Kubernetes_Cluster_Kind
+        D[Argo CD] -->|Syncs Git Repo| E[Helm Charts]
+        E --> F[Deployments and Services<br/>Namespace: microservices]
     end
 
-    G[GitHub Repositories] --> H[GitHub Actions CI]
+    G[GitHub Repository] --> H[GitHub Actions]
     H --> I[Docker Hub Images]
     D --> F
 ```
-
----
 
 ## Technologies
 
