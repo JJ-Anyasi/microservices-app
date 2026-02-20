@@ -58,3 +58,30 @@ graph TD
     style G fill:#f5f5f5,stroke:#666,stroke-width:1px
     style H fill:#f5f5f5,stroke:#666,stroke-width:1px
     style I fill:#f5f5f5,stroke:#666,stroke-width:1px
+
+## Technologies
+
+Languages/Frameworks: Node.js + Express
+Containerization: Docker
+Orchestration: Kubernetes (Kind for local development)
+Packaging: Helm v3
+GitOps & CD: Argo CD
+CI: GitHub Actions
+Registry: Docker Hub (anyasi/*:latest)
+
+## Project Structure
+
+microservices-gitops/              # GitOps repo (Argo CD manifests + Helm charts)
+├── argocd/                        # Argo CD Application YAMLs
+├── charts/
+│   ├── backend/
+│   ├── frontend/
+│   └── user-service/
+└── README.md
+
+microservices-app/                 # Source code repo
+├── backend/
+├── frontend/
+├── user-service/
+└── .github/workflows/             # CI pipeline (build-push.yaml)
+
